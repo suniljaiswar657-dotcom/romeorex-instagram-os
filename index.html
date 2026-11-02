@@ -45,7 +45,18 @@
 <section id="settings" class="section"><div class="grid"><div class="card s6"><h3>Creator identity</h3><label>Instagram username</label><input id="handle" value="@romeorexislive"><label>Display identity</label><input id="brandName" value="ROMEOREX IS LIVE"><label>Tagline</label><input id="tagline" value="DOMINATE EVERY MATCH"><button class="btn" id="saveSettings" style="margin-top:14px">Save identity</button></div><div class="card s6"><h3>Data, backup & integrations</h3><p>Drafts, calendar, metrics, and settings are saved in this browser on this device.</p><div class="notice">Instagram-only workspace. No YouTube account, channel data, or YouTube publishing workflow is connected here. No password collection or unofficial auto-like / auto-follow / auto-DM.</div><div class="actions"><button class="btn secondary" id="exportData">Export backup</button><button class="btn ghost" id="importData">Restore backup</button><input type="file" id="importFile" accept="application/json" hidden></div></div></div></section>
 </main></div>
 <script>
-const $=id=>document.getElementById(id),read=(k,d=[])=>{try{return JSON.parse(localStorage.getItem('rr_'+k))??d}catch{return d}},write=(k,v)=>localStorage.setItem('rr_'+k,JSON.stringify(v));
+const $=id=>document.getElementById(id);
+function validStoredValue(k,v){
+ if(k==='drafts')return Array.isArray(v)&&v.every(x=>x&&typeof x==='object'&&['title','format','hook','caption','hashtags','cover','date'].every(p=>typeof x[p]==='string'));
+ if(k==='plans')return Array.isArray(v)&&v.every(x=>x&&typeof x==='object'&&['title','format','date','status'].every(p=>typeof x[p]==='string'));
+ if(k==='metrics')return v===null||(v&&typeof v==='object'&&['followers','reach','interactions','rate'].every(p=>Number.isFinite(v[p]))&&v.followers>=0&&v.reach>0&&v.interactions>=0&&v.rate>=0&&typeof v.date==='string');
+ if(k==='settings')return v&&typeof v==='object'&&['handle','brandName','tagline'].every(p=>typeof v[p]==='string');
+ if(k==='daily')return v===null||(v&&typeof v==='object'&&['topic','source','pack','date'].every(p=>typeof v[p]==='string'));
+ if(k==='checklist')return Array.isArray(v)&&v.length===6&&v.every(x=>typeof x==='boolean');
+ return false;
+}
+const read=(k,d=[])=>{try{const raw=localStorage.getItem('rr_'+k);if(raw===null)return d;const value=JSON.parse(raw);return validStoredValue(k,value)?value:d}catch{return d}};
+const write=(k,v)=>{try{if(!validStoredValue(k,v))return false;localStorage.setItem('rr_'+k,JSON.stringify(v));return true}catch{return false}};
 let drafts=read('drafts'),plans=read('plans'),metrics=read('metrics',null),settings=read('settings',{handle:'@romeorexislive',brandName:'ROMEOREX IS LIVE',tagline:'DOMINATE EVERY MATCH'}),daily=read('daily',null);
 const tasks=['Check official BGMI announcements','Check esports / tournament updates','Verify any redeem-code claim','Choose one Reel or carousel topic','Review caption, cover and hashtags','Approve content before publishing'];
 let checklist=read('checklist',Array(tasks.length).fill(false));if(!Array.isArray(checklist)||checklist.length!==tasks.length||!checklist.every(v=>typeof v==='boolean'))checklist=Array(tasks.length).fill(false);
